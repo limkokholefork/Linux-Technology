@@ -9,7 +9,7 @@ ls -l,表示长格式显示文件。
 文件类型：
    - ：普通文件
    d ：目录文件
-   b ：跨设备文件(block)
+   b ：块设备文件(block)
    c ：字符设备文件(character)
    l ：符号链接文件(symbolic link file)
    p ：命令管道(pipe)
