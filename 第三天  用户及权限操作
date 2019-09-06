@@ -1,0 +1,162 @@
+权限有3组，属主、属组、其他，每三位一组。
+文件：
+r：可读，可以使用类似cat等命令查看文件内容。
+w：可写，可以编辑或删除此文件。
+x：可执行，exacutable，可以在命令提示符下当作命令提交给内核运行。
+目录：
+r：可以对此目录执行ls列出内部所有文件。
+w：可以在此目录创建文件。
+x：可以使用cd切换进此命令，也可以使用ls -l 查看内部文件的详细信息。
+---------------------------------------------------------------
+用户：UID，在,etc/passwd.
+组：GID，在/etc/group
+影子口令：
+用户：密码存放处-->/etc/shadow
+组：密码存放处-->/etc/gshadow
+用户类别：
+管理员：0（UID号）
+普通用户：1-65535（UID号）16位
+   系统用户：1-499
+   一般用户：500-60000
+用户组：
+管理员组
+普通组
+   系统组
+   一般组
+创建用户时，如果没有为其指定所属的组，系统会自动为其创建一个同名的组。
+附加组，也称额外组：默认组以外的其他组。
+
+/etc/passwd 目录解析：
+account:登录名
+passwd:密码
+UID:用户ID
+GID：基本组ID
+comment:注释
+HOME DIR ：家目录
+SHELL：用户默认的shell
+/etc/shadow 目录解析：
+accunt:登录名
+encrypted password：加密的密码
+加"*"或者"!!"是表示锁定，具体看文档内容。
+which 文件名  可以查看文件所在处
+------------------------------------------------------------
+Linux加密方法：
+对称加密：加密和解密使用同一个密码
+公钥加密：每个密码都成对出现，一个为私钥(secret key)，一个为公钥(public key)
+单向加密，散列加密：提取数据特征码，常用于数据完整性校验，有1.不可逆性  2.雪崩效应  3.定长输出
+计算 md5sum 文件
+SHA1 ：哈希值
+MD5：Message Digest,128位，定长输出
+SHA1：Secure Hash Algorithm 160位定长输出
+-------------------------------------------------------------
+用户管理：
+增加用户：useradd username
+改密码：passwd username
+增加组：groupadd groupname
+用户管理命令：useradd、userdel、usermod、passwd、chsh、chfn、finger、id、chage
+ 1.useradd -u :user -u 数字(UID) username
+           -g:GID(基本组)
+           -G：GID，.....(附加组)
+           -c:"commeut" 指定注释信息
+           -d:指定加目录 /。。/。。
+           -s:指定用户shell路径
+ /etc/shells:指定了当前系统可用的安全shell
+ 环境变量：
+   PATH
+   HISTSIZE
+   SHELL
+  查看自己的SHELL  echo $SHELL
+2.userdel [option] USERNAME
+   id：查看用户的属性信息
+    -g:用户组
+    -u:用户名
+    -G：附加组
+    -n:可以和前面3个连用
+  finger 用户名：查看账户信息
+  userdel 用户名,删除用户，但默认不删除其家目录，加 -r 就连带删除其家目录
+  修改用户帐号属性：
+3.usermod username
+          -u:改用户UID
+          -g:改基本组
+          -a-G:追加附加组，不使用-a选项会覆盖此前的附加组
+          -c:指定注释信息
+          -m-d:改家目录，-m是移动其此前的文件至新的家目录
+          -s：改用户shell
+          -l:改用户名
+          -L：锁定用户帐号，类似禁用
+          -U：解锁用户帐号
+          chsh:修改用户的默认shell
+          chfn:修改注释信息
+4.密码管理：
+passwd [USERNAME] ：root用户才能用，普通用户只能用passwd改自己的密码
+      -l:锁定用户
+      -u:解锁用户
+      -d:删除用户密码，系统是不允许空密码用户登录的
+    --stdin：从标准输入接收密码
+ 用法：echo "password" | passwd --stdin username  (管道)
+ man passwd   详细用法man手册查询
+ passwd -n 2 -x 50 username :其密码最短期限2天，最长50天
+ pwck :检查用户帐号的完整性
+组管理命令：groupadd、groupdel、groupmod、gpasswd
+创建组：groupadd  groupname
+        -g:指定GID
+        -r:添加为系统组，系统组是不允许登录的
+ 修改组：groupmod groupname
+        -g:改GID
+        -n:改组名
+ 删除组：groupdel groupname
+ 设置组密码：gpasswd groupname
+ newgrp:后面跟组名，退出 exit
+ chage:改变密码过期信息，man chage
+     -d:最近一次的修改时间
+     -E:过期时间
+     -I：非活动时间
+     -m：最短使用期限
+     -M：最长使用期限
+     -W：警告时间
+权限管理：chown(改属主，也可同时改属主和属组)、chgrp(改属组)、chmod(改权限)、umask(查遮罩码)
+chown:改变文件属主(只有管理员可以使用此命令)
+用法：chown 用户名 文件(可多个文件或者目录（目录要加-R递归改变）)
+      --reference=/../../hh  file...
+  把file.. 的属主修改和hh 的一样   
+chgrp:改变属组，用法和chown一样
+同时改变属主和属组：chown username(:或者.)groupname file,...
+该文件权限：chmod,修改目录加-R
+修改三类用户的权限：chmod 777 file
+修改某类用户或者某些用户权限：u(主)、g(组)、o(其他)、a(所有)     chmod u=mode(如：777) file
+修改某类用户的某位或某些权限： chmod 用户类别 (+ or -) mode(如：rwx) file 
+    也可以  chmod --reference=/tmp/test  /tmp/abc
+----------------------------------------------------------------------------------
+手动添加用户或用户组：去/etc/passwd、/etc/passwd、/etc/group、/etc/shadow 配置
+手动设置密码：openssl password -1 -salt '154564'(杂质)
+查umask:遮罩码
+创建文件：666-umask
+创建目录：777-umask
+可以设置：umask  (遮罩码)
+文件默认不能具有执行权限，如果算得的加=结果中有执行权限，则将其权限加1
+---------------------------------------------------------------------------------
+站在用户登录的角度来说，SHELL的类型
+登录式shell:
+  正常通过某终端登录
+  su - username
+  su -l username
+非登录式shell:
+  su useranme
+  图形终端下打开命令窗口
+  自动执行的shell脚本
+bash 的配置文件：
+全局配置：
+/etc/profile,   /etc/profile.d/*.sh,   /etc/bashrc
+个人配置：
+~/.bash_profile  , ~/.bashrc
+
+profile类的文件
+1.设定环境变量
+2.运行命令或脚本
+bashrc类的文件
+ 1.设定本地变量
+ 2.定义命令别名
+登录式shell如何读取配置文件？
+/etc/profile--> /etc/profile.d/*.sh--> ~/.bash_profile--> ~/.bashrc--> /etc/bashrc
+非登录式shell如何读取配置文件？
+ ~/.bashrc--> /etc/bashrc--> /etc/profile.d/*.sh
