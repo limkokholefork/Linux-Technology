@@ -1,5 +1,5 @@
 《Man手册》分章节：
-1.用户命令（/bin,/usr/bin./usr/local/bin)
+1.用户命令（/bin,/usr/bin,/usr/local/bin)
 2.系统调用
 3.库用户
 4.特殊文件(设备文件)
