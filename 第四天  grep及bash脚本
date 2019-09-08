@@ -157,8 +157,8 @@ bash变量类型：
       #  注释掉，第一行是特例
 条件测试类型：整数测试、字符测试、文件测试
 条件测试的表达式(expreesion)：
-    [expression]
-    [[expression]]
+    [expression]     命令测试法
+    [[expression]]   关键字测试法
     test expression
     例：[ $A -eq $ $B ],有必须有空格
  整数比较：
