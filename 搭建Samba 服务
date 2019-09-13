@@ -35,7 +35,7 @@ postfix:虚拟用户，虚拟域
     write list = @用户名或组
     valid users = (允许的用户，相当白名单)
     invalid users = (不允许的用户，相当黑名单)
-查看getenforce 是否允许 ，/etc/seLinux/config可改
+查看getenforce 是否允许 ，/etc/seLinux/config可改，或直接 setenforce 0
 samba加入用户：smbpasswd -a 用户名
 Samba 服务的相关命令：
   service smb start   启动
