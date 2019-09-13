@@ -47,4 +47,4 @@
        chmod o+t DIR  : 对目录,chmod o-t DIR
    例：chmod 1755 /backup/test
    前面代表：SUID  SGID  sticky
-       
+      001:sticky    010:SGID   100:SUID 
