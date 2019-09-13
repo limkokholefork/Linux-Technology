@@ -1,0 +1,64 @@
+FTP：在TCP/IP应用层
+CIFS/SMB
+CIFS:Common Internet File System
+SMB:Service Message Block
+开放端口：137（netbios udp）、138(udp)、139(tcp)、445(tcp 共享文件)
+Linux/Unix
+  Netbios
+  CIFS/SMB
+  Winbindd(域服务)
+  LDAP（opendap  比较少用）
+--------------------------------------------------------------------------
+              Samba服务（基础部分）
+帐号：系统用户加入Samba,密码自己设
+安全级别：user，share(不要密码)
+同一主机，共享名称(UNC)路径不能相同
+共享文件，对方权限取共享权限和文件系统权限的交集
+client :客户端   common：服务组件  
+安装：
+  1.yum clean all   清理缓存
+  2.yum -y install samba
+  安装过程中，samba会启动两个进程，1.nmbd:netbios  2.smbd:文件共享
+  配置nmbd和smbd及更多   ，  /etc/rc.d/init.d/smb
+samba 的配置文件  /etc/samba  ,主配置文件：smb.conf
+global:全局配置
+printers:打印机
+homes:家目录共享
+postfix:虚拟用户，虚拟域
+[share  (自取)]
+    comment = (解释用处)
+    path = (/路径)
+    browseable = (是否可浏览)
+    public = 是否所有用户可读  yes/no
+    read only =   yes/no
+    writable = (可写，和只读不能同时用)
+    write list = @用户名或组
+    valid users = (允许的用户，相当白名单)
+    invalid users = (不允许的用户，相当黑名单)
+查看getenforce 是否允许 ，/etc/seLinux/config可改
+samba加入用户：smbpasswd -a 用户名
+Samba 服务的相关命令：
+  service smb start   启动
+  service smb stop    停止
+  service smb restart   重启
+  service smb  reload   重加载
+  chkonfig --level 3 smb on    自动加载samba服务
+  chkonfig --level 3 smb off   不自动加载samba服务
+安装samba-client 实现Linux访问Windowns
+访问命令：smbclient -L IP -U(用户名)
+出现不能操作文件，请看权限。
+Linux挂载samba：
+  mount -t cifs(文件系统) //IP /路径  /挂载点 -o username=用户
+  开机挂载：vim /etc/fstab
+  例：IP /挂载点  文件系统   用户密码（可用credentials=/路径替换）  0 0
+  如果替换：新建一个文本：username=用户名    passwd=密码     改权限og=--- /文件路径，这样可以避免别人看到配置文件的帐号密码
+  练习：
+      基于samba，新建一个共享，共享名为tools，开放给组mygrp中的所有用户具有读写权限，其他用户只有读权限
+        [share]
+            comment = shared
+            path = /tools
+            guest ok = yes
+            write list = @mygrp
+-----------------------------------------------------------------------------------------------
+                 Samba服务（高级部分）
+       
