@@ -48,3 +48,89 @@
    例：chmod 1755 /backup/test
    前面代表：SUID  SGID  sticky
       001:sticky    010:SGID   100:SUID 
+文件系统访问控制
+setfacl
+  -m:设定
+      setfacl -m u:用户名 :权限（如rw） 文件名
+      setfacl -m g:组名 :权限（如rw） 文件名
+  -x:取消设定
+      setfacl -x u:用户名 文件名
+      setfacl -x g:组名 文件名
+FACL：Filesystem Access Contorl List:利用文件扩展保存额外的访问控制权限
+getfacl 文件名
+-------------------------------------------------------------------
+        用户
+whiami:查看当前登录的用户
+who:显示登录到当前系统的用户有哪些
+  -H：详细显示
+  -r:显示运行级别
+sleep:延时函数
+w:显示用户登录
+last:登录日志，显示/var/log/wtmp 文件，显示用户登录历史及系统重启历史
+  -n# :显示最近#次的相关信息
+lastb , /var/log/btmp，显示用户错误的登录尝试
+  -n#：显示最近#次的相关信息
+  用法：输入lastb,可加选项
+lastlog:显示每一个用户最近一次的成功登录信息
+用法：lastlog , 也可以lastlog -u 用户名
+basename:取最后文件名
+mail:查看邮件，按Q键退出
+例：cat(echo 写邮件也行) /etc/fatab （前面是内容）| mail -s "How are you(主题)"  用户（要发送的用户）
+查看主机名：hostname 
+生成随机数：RANDOM(0-32678)
+  用法：echo $RANDOM
+随机数生成数：熵池
+  /dev/random
+  /dev/urandom
+-----------------------------------------------------------------------
+终端类型：
+  console:控制台
+  pty:物理终端
+  tty:虚拟终端
+  ttys:串行终端
+  pts/数字：伪终端
+----------------------------------------------------------------------
+  练习：
+    写一个脚本，利用RANDOM生成10个随机数，并找出其中的最大值和最小值
+    #！/bin/bash
+    #
+    delcare -i MAX=0
+    delcare -i MIN=0
+    for I in {1..10};do
+      MYRANDOM=$RANDOM
+    [$I -eq 1] && MIN=$MYRAND
+    if [$I -le 9] ;then
+      ehco -n "$MYRAND"
+     else 
+      echo "$MYRAND"
+     fi
+    [$MYRAND -gt $MAX] && MAX=$MYRAND
+    [$MYRAND - lt $MIN] && MIN=$MYRAND
+   done
+    echo $MAX , $MIN
+-----------------------------------------------------------------------------
+case 语句：选择结构
+  用法：case 变量 in
+    value1)
+        语句1 
+        ........
+        ；；（双分号结束）
+    value2)
+        语句1 
+        ........
+        ；；（双分号结束）
+    *)
+        语句1 
+        ........
+        ；；（双分号结束）
+     esac
+  
+  例如：
+    #！/bin/bash
+    #
+    case $1 in
+    [0-9])
+      echo "A number"
+    *)
+      echo "other"
+   esac
