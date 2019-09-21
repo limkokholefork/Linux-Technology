@@ -1,0 +1,139 @@
+ARP:地址解析
+RARP:反向地址解析
+TCP:传输控制协议
+UDP:用户数据报协议
+------------------------------------
+网络地址
+A类：255.0.0.0  8位掩码
+127个A类，其中127用于回环，1-126可用
+容纳主机数：2^24-2
+主机位全0：网络地址
+主机位全1：广播地址
+
+B类：255.255.0.0  16位掩码
+128-191
+64个B类，2^14个B类网
+容纳主机数：2^16-2
+
+C类：255.255.255.0  24位掩码
+192-223
+32个C类，2^21个C类网
+容纳主机数：2^8-2
+-------------------------------------
+主机接入网络
+IP
+NETMASK(子网掩码)
+GATEWAY(网关)
+HOSTNAEM
+DNS1
+DNS2
+DNS3
+路由：
+DHCP：动态主机配置协议
+Linux 网络属于内核功能
+RHEL5: 	/etc/modprobe.conf
+	alias ........
+RHEL6: 	/etc/udev/rules.d-persistent-net.rules
+--------------------------------------
+网卡命名：
+以太网：ethX
+ifconfig :查询处于活动状态的网卡信息
+	-a:显示所有接口的配置信息
+ifconfig [ethX]:显示指定网卡信息
+ifconfig ethX IP/MASK :配置IP
+例：ifconfig eth0 10.0.0.1 /8
+ifconfig eth1 [up|down] :启用或禁用网卡
+配置IP：
+	ifconfig eth1 IP地址/24
+	配置地址立即生效，但重启网络服务或主机都失效
+
+网络服务：
+	红帽5：/etc/init.d/network{start|stop|restart|status}   推荐
+	红帽6： /etc/init.d/networkManager{start|stop|restart|status}
+网关：
+route
+	add(添加)：-host(主机路由)|-net(网络路由)
+	del(删除)：-host(主机路由)|-net(网络路由)
+route 命令查看路由表（不加参数）
+	route add -net|-host 目标 gw 下一跳     （指定路由）
+	例：route add -net 10.0.0.0 gw 192.168.8.11
+route add default gw nexthop
+删除路由：
+route del -net 10.0.0.0/8
+查看：route -n :以数字方式显示各主机或端口等相关信息
+没有修改配置文件而出来的效果重启后都会失效
+
+配置文件：网络
+/etc/sysconfig/network
+网络接口配置文件：
+/etc/sysconfig/network-scripts/ifcfg-接口名称
+DEVICE=：关联的设备名称，要与文件名的后半部”接口名称“保持一致
+BOOTPROTO={static|none|dhcp|bootp}:引导协议，要使用静态地址，使用static或none;dhcp表示使用DHCP服务器获取地址
+IPADDR=:IP地址
+NETMASK=:子网掩码
+GATEWAY=:设定默认网关
+ONBOOT=：开机时是否自动激活此网络接口
+HWADDR=：硬件地址，要与硬件中的地址保持一致；可省略
+USERCTL={yes|no}:是否允许普通用户控制此接口
+PEERDNS=:{yes|no}：是否在BOOTPROTO为dhcp时接受由dhcp服务器指定的DNS地址
+（以上设定不会立即生效，重启网络服务或者主机都会永久生效）
+路由：
+/etc/sysconfig/network-scripts/route-ethX
+添加格式一：
+目标 via nexthop
+例：192.168.10.0/24 via 10.10.10.254（网卡）
+重启网络：/etc/init.d/network  restart
+添加格式二：
+ADDRESS0=  [等号与之前的字母没有空格]
+NETMASK0=
+GATEWAY0=
+例：ADDRESS0=192.168.10.0
+	NETMASK0=255.255.255.0
+	GATEWAY0=10.10.10.254
+	........................
+DNS服务器指定方法只有一种
+/etc/resolv.conf
+nameserver DNS_IP_1
+nameserver DNS_IP_2
+nameserver DNS_IP_3
+例  nameserver 192.168.1.1
+指定本地解析
+vim /etc/hosts
+新增一条： 172.16.0.1  www.you.com  www  (主机IP    主机名      主机别名)
+ping www   (自动解析)
+DNS-->/etc/hsots--->DNS缓存
+配置主机名：
+方法1.
+hostname 要修改的主机名
+立即生效，重启失效
+方法2.
+/etc/sysconfig/network
+	HOSTNAME=
+----------------------------------------------------------------------------
+一个网卡，两个地址
+一、
+ifconfig ethx:x IP/NETMASK
+ 重启失效
+二、
+/etc/sysconfig/network-scripts/ifcfg-ethx:x
+	DEVICE=ethx:x
+	注：网卡非主要地址不能使用DHCP动态获取
+
+ip
+	link:网络接口属性
+	addr:协议地址
+	route:路由
+		link:
+			show
+				ip -s link show
+			set
+				ip link set DEV{up|down}
+		addr
+			add	
+				ip addr add ADDRESS dev DEV
+			del 
+				ip addr del ADDRESS dev DEV
+		show
+			ip addr show dev DEV to 前缀（IP）
+		flush
+			ip addr flush dev DEV to 前缀（IP）
