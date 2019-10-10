@@ -1,0 +1,72 @@
+      《搭建DHCP服务器》
+
+1.检测系统是否已经安装了DHCP相关软件：
+rpm -qa | grep dhcp
+2.如果系统还没有安装DHCP软件包，可以使用yum命令安装所需软件包
+	首先挂载镜像
+	mkdir /iso
+	mount /dev/cdrom  /iso
+	可以查看dhcp软件包的信息
+	yum info dhcp
+	清除缓存
+	yum clean all
+	安装
+	yum install dhcp -yum
+	
+	rpm -qa | grep dhcp
+	
+	systemctl restart dhcpd         //重启服务
+	systemctl enable dhcpd          //开机运行
+	systemctl status dhcpd          //查看运行状态
+------------------------------------------------------------
+
+	查看自己的网卡MAC地址：
+		ifconfig | grep HW
+	查看别人的MAC地址
+		ping -c 4 对方IP
+		arp -n
+/usr/sbin/dhcpd
+启动整个 dhcp daemon 的执行档！其实最详细的执行方式应该要使用『 man dhcpd 』来查阅
+/var/lib/dhcp/dhcpd.leases
+DHCP 服务器端与客户端租约建立的启始与到期日就是记录在这个档案当中
+<<		案例
+
+  Linux 主机对内的 eth1 的 IP 设定为 192.168.100.254 这个；
+  内部网段设定为 192.168.100.0/24 这一段，且内部计算机的 router 为
+192.168.100.254 ，此外 DNS 主机的 IP 为中华电信的 168.95.1.1 及
+Seednet 的 139.175.10.20 这两个；
+  我想要让每个使用者预设租约为 3 天，最长为 6 天；
+  只想要分配的 IP 只有 192.168.100.101 到 192.168.100.200 这几个，其
+他的 IP 则保留下来；
+  我还有一部主机，他的 MAC 是『 08:00:27:11:EB:C2 』，我要给他的主机
+名为 win7 ，且 IP 为 192.168.100.30 这个 (请对照图 3.2-1 喔！)。
+那我的配置文件就会像底下这个样子了：
+[root@www ~]# vim /etc/dhcp/dhcpd.conf
+# 1. 整体的环境设定
+ddns-update-style none; <==不要更新 DDNS 的设定
+
+ignore client-updates; <==忽略客户端的 DNS更新功能
+default-lease-time 259200; <==预设租约为 3 天
+max-lease-time 518400; <==最大租约为 6 天
+option routers 192.168.100.254; <==这就是预设路由
+option domain-name "centos.vbird"; <==给予一个领域名
+option domain-name-servers 168.95.1.1, 139.175.10.20;
+# 上面是 DNS 的 IP 设定，这个设定值会修改客户端的 /etc/resolv.conf档案内容
+# 2. 关于动态分配的 IP
+subnet 192.168.100.0 netmask 255.255.255.0 {
+range 192.168.100.101 192.168.100.200; <==分配的 IP 范围
+# 3. 关于固定的 IP 
+host win7 {
+hardware ethernet 08:00:27:11:EB:C2; <==客户端网卡 MAC
+fixed-address 192.168.100.30; <==给予固定的 IP
+}
+}
+>>
+
+如果DHCP服务侦听接口冲突，可以设定只侦听某个接口的请求（CentOS 5.X之前）：
+vim /etc/sysconfig/dhcpd
+DHCPDARGS="eth0"
+
+
+dhcpd 使用的端口是 port 67 ，客户端使用的是端口68；
+
