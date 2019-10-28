@@ -70,3 +70,23 @@ DHCPDARGS="eth0"
 
 dhcpd 使用的端口是 port 67 ，客户端使用的是端口68；
 
+
+=====================================
+
+路由转发功能
+在/etc/sysctl.conf配置文件中添加
+net.ipv4.ip_forward = 1
+--------------
+sysctl -p    //启用转发功能
+
+
+配置中继代理。
+中继代理计算机默认不转发DHCP客户机的请求，需要使用dhcrelay指定DHCP服务器的位置。
+# cp /lib/systemd/system/dhcrelay.service    /etc/systemd/system
+# cd /etc/systemd/system
+# vim dhcrelay.service
+[service]
+ExecStart=/usr/sbin/dhcrelay -d --no-pid (接DHCP服务器的IP)
+# systemctl --system daemon-reload     //修改配置的原始文件后，重新配置信息
+# systemctl restart dhcrelay           // 启动DHCP中继
+# systemctl enable dhcrelay            // 设置随系统启动
