@@ -13,15 +13,16 @@ DNS服务搭建
 ******************
 用管理员(root 或者  root组的成员)身份搭建服务
 *****************
+注意：此教程是基于本人练习所设，后来者应根据实际修改适合自己的域名等信息，请在局域网上操作，不要与因特网上的错乱。
 
 一、配置主DNS服务
 1.1  查看是否已经安装了bind
 	# rpm -qa | grep bind
 	如果没有就下一步
 1.2  安装DNS服务
-	#  yum  clean all    				//清除缓存
+	#  yum  clean all    		        //清除缓存
 	#  mount  /dev/cdrom   /mnt  		//挂载光驱
-	#  yum insatll bind bind-chroot  -y		//安装服务
+	#  yum insatll bind bind-chroot  -y	//安装服务
 
 服务器端相关文件:
 /etc/named.conf    //主配置文件
@@ -31,7 +32,7 @@ DNS服务搭建
 /var/named/named.loopback		//配置反向解析样本文件
 
 例如：复制样本命令： cp -p  /var/named/named.localhost    /var/named/zhaohuiyou.com.zones
-					 cp -p  /var/named/named.localhost    /var/named/254.1.168.192.zones
+		   cp -p  /var/named/named.localhost    /var/named/254.1.168.192.zones
 					 
 					 
 1.3  编辑主配置文件
@@ -92,18 +93,18 @@ logging {
         };
 };
 
-zone "." IN {											//访问根域名服务器，非常重要，不乱动。
+zone "." IN {				//访问根域名服务器，非常重要，不乱动。
 	type hint;
 	file "named.ca";
 };
 
-zone "zhaohuiyou.com" IN {								//配置个人域名正向解析
+zone "zhaohuiyou.com" IN {		//配置个人域名正向解析
 	type master;
-	file "zhaohuiyou.com.zone";							//解析包含的文件，放置在/var/named  中，名称一定要相同
-};														//注意有 ； 号
-zone "1.168.192.in.addr.arpa" IN {       				//配置个人域名反向解析
+	file "zhaohuiyou.com.zone";	//解析包含的文件，放置在/var/named  中，名称一定要相同
+};					//注意有 ； 号
+zone "1.168.192.in.addr.arpa" IN {      //配置个人域名反向解析
 	type master;
-	file "254.1.168.192.zone";							//解析包含的文件，放置在/var/named  中，名称一定要相同
+	file "254.1.168.192.zone";	//解析包含的文件，放置在/var/named  中，名称一定要相同
 
 }; 
 *****************************************************
@@ -111,7 +112,7 @@ zone "1.168.192.in.addr.arpa" IN {       				//配置个人域名反向解析
 
 
 #  cd /var/named      
-# vim zhaohuiyou.com.zone                               //编辑BIND的区域配置文件
+# vim zhaohuiyou.com.zone                //编辑BIND的区域配置文件
 配置内容如下
 ****************
 
@@ -133,7 +134,7 @@ web   IN CNAME   www.zhaohuiyou.com.
  正向解析域配置完成
  
 #  vim  254.1.168.192.zone
-配置内容如下									//注意，两个配置内容要相互呼应，不然会报错。
+配置内容如下					//注意，两个配置内容要相互呼应，不然会报错。
 **********************
 $TTL 1D
 @	IN SOA	1.168.192.  root.zhaohuiyou.com. (
