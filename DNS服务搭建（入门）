@@ -4,7 +4,7 @@ DNS服务搭建
 
 个人电脑配置软件：VMware Workstation 15 Pro
 操作系统：CentOS 7  （server and client ）
-此前服务器已安装DHCP服务，用到的客户机是从服务器自动获取的IP和DNS 地址
+此前服务器已安装DHCP服务，客户机是从服务器自动获取的IP和DNS 地址
 所以client 和server 是同网段的。
 
 此电脑服务器端IP  : 192.168.1.254
