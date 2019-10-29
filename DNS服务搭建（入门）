@@ -1,0 +1,238 @@
+DNS服务搭建
+
+入门：
+
+个人电脑配置软件：VMware Workstation 15 Pro
+操作系统：CentOS 7  （server and client ）
+此前服务器已安装DHCP服务，用到的客户机是从服务器自动获取的IP和DNS 地址
+所以client 和server 是同网段的。
+
+此电脑服务器端IP  : 192.168.1.254
+客户端从服务器端自动获取。
+
+******************
+用管理员(root 或者  root组的成员)身份搭建服务
+*****************
+
+一、配置主DNS服务
+1.1  查看是否已经安装了bind
+	# rpm -qa | grep bind
+	如果没有就下一步
+1.2  安装DNS服务
+	#  yum  clean all    				//清除缓存
+	#  mount  /dev/cdrom   /mnt  		//挂载光驱
+	#  yum insatll bind bind-chroot  -y		//安装服务
+
+服务器端相关文件:
+/etc/named.conf    //主配置文件
+/etc//etc/named.rfc1912.zones    //DNS 域配置文件
+/var/named/                      //BIND 相关配置文件
+/var/named/named.localhost       //配置正向解析样本文件
+/var/named/named.loopback		//配置反向解析样本文件
+
+例如：复制样本命令： cp -p  /var/named/named.localhost    /var/named/zhaohuiyou.com.zones
+					 cp -p  /var/named/named.localhost    /var/named/254.1.168.192.zones
+					 
+					 
+1.3  编辑主配置文件
+
+vim /etc/named
+配置内容如下
+****************************       //*******为个人在注释，在配置文件里不存在
+//
+// named.conf
+//
+// Provided by Red Hat bind package to configure the ISC BIND named(8) DNS
+// server as a caching only nameserver (as a localhost DNS resolver only).
+//
+// See /usr/share/doc/bind*/sample/ for example named configuration files.
+//
+// See the BIND Administrator's Reference Manual (ARM) for details about the
+// configuration located in /usr/share/doc/bind-{version}/Bv9ARM.html
+
+options {
+	listen-on port 53 { any; };     //改为any,  允许任何主机侦听53 port (tcp & udp的53号端口)
+	listen-on-v6 port 53 { ::1; };
+	directory 	"/var/named";
+	dump-file 	"/var/named/data/cache_dump.db";
+	statistics-file "/var/named/data/named_stats.txt";
+	memstatistics-file "/var/named/data/named_mem_stats.txt";
+	recursing-file  "/var/named/data/named.recursing";
+	secroots-file   "/var/named/data/named.secroots";
+	allow-query     { any; };      //改为any，允许任何主机询问
+
+	/* 
+	 - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+	 - If you are building a RECURSIVE (caching) DNS server, you need to enable 
+	   recursion. 
+	 - If your recursive DNS server has a public IP address, you MUST enable access 
+	   control to limit queries to your legitimate users. Failing to do so will
+	   cause your server to become part of large scale DNS amplification 
+	   attacks. Implementing BCP38 within your network would greatly
+	   reduce such attack surface 
+	*/
+	recursion yes;
+
+	dnssec-enable yes;
+	dnssec-validation yes;
+
+	/* Path to ISC DLV key */
+	bindkeys-file "/etc/named.root.key";
+
+	managed-keys-directory "/var/named/dynamic";
+
+	pid-file "/run/named/named.pid";
+	session-keyfile "/run/named/session.key";
+};
+
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+zone "." IN {											//访问根域名服务器，非常重要，不乱动。
+	type hint;
+	file "named.ca";
+};
+
+zone "zhaohuiyou.com" IN {								//配置个人域名正向解析
+	type master;
+	file "zhaohuiyou.com.zone";							//解析包含的文件，放置在/var/named  中，名称一定要相同
+};														//注意有 ； 号
+zone "1.168.192.in.addr.arpa" IN {       				//配置个人域名反向解析
+	type master;
+	file "254.1.168.192.zone";							//解析包含的文件，放置在/var/named  中，名称一定要相同
+
+}; 
+*****************************************************
+主配置文件配置完成！
+
+
+#  cd /var/named      
+# vim zhaohuiyou.com.zone                               //编辑BIND的区域配置文件
+配置内容如下
+****************
+
+$TTL 1D
+@	IN SOA	zhaohuiyou.com.  root.zhaohuiyou.com. (
+					20191029	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+@ IN NS dns.zhaohuiyou.com.
+@ IN MX    10   mail.zhaohuiyou.com.
+dns IN A 192.168.1.254
+www     IN   A   192.168.1.254
+ftp    IN  A     192.168.1.10
+web   IN CNAME   www.zhaohuiyou.com.
+ 
+ ****************************************
+ 正向解析域配置完成
+ 
+#  vim  254.1.168.192.zone
+配置内容如下									//注意，两个配置内容要相互呼应，不然会报错。
+**********************
+$TTL 1D
+@	IN SOA	1.168.192.  root.zhaohuiyou.com. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+@   IN NS   dns.zhaohuiyou.com.
+@ IN MX 10 mail.zhaohuiyou.com.
+10  IN PTR ftp.zhaohuiyou.com.
+254 IN PTR dns.zhaohuiyou.com.
+254 IN PTR www.zhaohuiyou.com.
+
+*********************************************
+反向解析域配置完成
+
+1.4     启动服务
+
+#  firewall-cmd --permanent --add service=dhcp      //防火墙放行
+#  firewall-cmd  --reload                 //重新加载防火墙
+# chgrp named   /etc/named.conf           //更改主配置文件和域文件的属组为named.
+#  systemctl  restart named           //重启DNS服务
+#  systemctl  enable  named           //开机有效
+
+
+查错分析命令：
+"systemctl status named.service"   and   "journalctl -xe"
+
+
+********************************************************************
+客户端测试：
+1.1看 /etc/resolv.conf
+#  cat /etc/resolv.conf
+
+*************内容如下************     //根据DHCP服务从服务器自动获取，如果没有要手打
+
+search zhaohuiyou.com
+nameserver 192.168.1.254
+
+*********************************
+
+1.2  ping   服务器IP 
+[root@zhaohuiyou ~]# ping -c 4 192.168.1.254
+PING 192.168.1.254 (192.168.1.254) 56(84) bytes of data.
+64 bytes from 192.168.1.254: icmp_seq=1 ttl=64 time=0.542 ms
+64 bytes from 192.168.1.254: icmp_seq=2 ttl=64 time=0.499 ms
+64 bytes from 192.168.1.254: icmp_seq=3 ttl=64 time=0.540 ms
+64 bytes from 192.168.1.254: icmp_seq=4 ttl=64 time=0.585 ms
+
+--- 192.168.1.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3006ms
+rtt min/avg/max/mdev = 0.499/0.541/0.585/0.038 ms
+*******************************************************
+说明客户端和服务器是连通的
+接下来ping  设置的域名    
+*******************************************************
+
+[root@zhaohuiyou ~]# ping -c 4 www.zhaohuiyou.com               //配置文件中的域名，可以ping通
+PING www.zhaohuiyou.com (192.168.1.254) 56(84) bytes of data.
+64 bytes from gateway (192.168.1.254): icmp_seq=1 ttl=64 time=0.393 ms
+64 bytes from gateway (192.168.1.254): icmp_seq=2 ttl=64 time=0.571 ms
+64 bytes from gateway (192.168.1.254): icmp_seq=3 ttl=64 time=0.621 ms
+64 bytes from gateway (192.168.1.254): icmp_seq=4 ttl=64 time=0.660 ms
+
+--- www.zhaohuiyou.com ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3007ms
+rtt min/avg/max/mdev = 0.393/0.561/0.660/0.103 ms
+
+
+********************************************************
+
+
+[root@zhaohuiyou ~]# ping -c 4 web.zhaohuiyou.com     //ping    web.zhaohuiyou.com
+PING www.zhaohuiyou.com (192.168.1.254) 56(84) bytes of data.
+64 bytes from gateway (192.168.1.254): icmp_seq=1 ttl=64 time=0.402 ms
+64 bytes from gateway (192.168.1.254): icmp_seq=2 ttl=64 time=1.01 ms
+64 bytes from gateway (192.168.1.254): icmp_seq=3 ttl=64 time=0.597 ms
+64 bytes from gateway (192.168.1.254): icmp_seq=4 ttl=64 time=0.545 ms
+
+--- www.zhaohuiyou.com ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3006ms
+rtt min/avg/max/mdev = 0.402/0.640/1.016/0.228 ms
+
+*************************************************************
+
+[root@zhaohuiyou ~]# ping -c 4 ftp.zhaohuiyou.com        //ping     ftp.zhaohuiyou.com 
+PING ftp.zhaohuiyou.com (192.168.1.10) 56(84) bytes of data.
+64 bytes from 192.168.1.10 (192.168.1.10): icmp_seq=1 ttl=64 time=0.820 ms
+64 bytes from 192.168.1.10 (192.168.1.10): icmp_seq=2 ttl=64 time=0.551 ms
+64 bytes from 192.168.1.10 (192.168.1.10): icmp_seq=3 ttl=64 time=0.634 ms
+64 bytes from 192.168.1.10 (192.168.1.10): icmp_seq=4 ttl=64 time=0.491 ms
+
+--- ftp.zhaohuiyou.com ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3003ms
+rtt min/avg/max/mdev = 0.491/0.624/0.820/0.124 ms
+
+================================
+
+DNS搭建  入门成功  ^_^  ！
+
+================================
